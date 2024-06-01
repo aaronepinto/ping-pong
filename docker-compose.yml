@@ -1,0 +1,16 @@
+services:
+  pingpong1:
+    build: .
+    ports:
+      - "8001:8000"
+    environment:
+      - INSTANCE_NUM=1
+      - OTHER_INSTANCE_URL=http://pingpong2:8002
+  pingpong2:
+    build: .
+    ports:
+      - "8002:8000"
+    environment:
+      - INSTANCE_NUM=2
+      - OTHER_INSTANCE_URL=http://pingpong1:8001
+
