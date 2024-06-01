@@ -1,28 +1,34 @@
-import requests
 import sys
+import requests
 
-if len(sys.argv) < 2:
-    print("Usage: python pong-cli.py <command> [param]")
-    sys.exit(1)
+# Configurable URLs for the instances
+INSTANCE_1_URL = "http://localhost:8001"
+INSTANCE_2_URL = "http://localhost:8002"
 
-command = sys.argv[1]
+def send_command(command, param=None):
+    url = INSTANCE_1_URL  # Assuming we always control the game from instance 1
+    if command == "start":
+        response = requests.get(f"{url}/start/{param}")
+    elif command == "pause":
+        response = requests.get(f"{url}/pause")
+    elif command == "resume":
+        response = requests.get(f"{url}/resume")
+    elif command == "stop":
+        response = requests.get(f"{url}/stop")
+    else:
+        print("Invalid command")
+        return
+    
+    if response.status_code == 200:
+        print("Command executed successfully:", response.json())
+    else:
+        print("Failed to execute command:", response.status_code, response.text)
 
-base_url = "http://localhost:8001"  # Adjust as needed for your setup
-
-if command == "start":
-    if len(sys.argv) != 3:
-        print("Usage: python pong-cli.py start <pong_time_ms>")
+if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        print("Usage: python pong-cli.py <command> [<param>]")
         sys.exit(1)
-    pong_time_ms = int(sys.argv[2])
-    response = requests.get(f"{base_url}/start/{pong_time_ms}")
-elif command == "pause":
-    response = requests.get(f"{base_url}/pause")
-elif command == "resume":
-    response = requests.get(f"{base_url}/resume")
-elif command == "stop":
-    response = requests.get(f"{base_url}/stop")
-else:
-    print("Unknown command")
-    sys.exit(1)
-
-print(response.json())
+    
+    command = sys.argv[1]
+    param = sys.argv[2] if len(sys.argv) > 2 else None
+    send_command(command, param)
