@@ -65,7 +65,7 @@ async def start_game(pong_time: int):
     game_state["game_running"] = True
     game_state["pong_time_ms"] = pong_time
 
-    if game_state["is_first_instance"]:
+    if game_state["instance_id"] == 1:
         try:
             requests.post(
                 OTHER_INSTANCE_URL + "/ping"
@@ -112,5 +112,4 @@ async def stop_game():
 if __name__ == "__main__":
     import uvicorn
 
-    game_state["is_first_instance"] = (OTHER_INSTANCE_URL == "http://pingpong2:8002")
     uvicorn.run(app, host="0.0.0.0")
