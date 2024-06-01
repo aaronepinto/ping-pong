@@ -19,10 +19,16 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Dictionary to manage the game state
-game_state = {"game_running": False, "pong_time_ms": 0, "is_first_instance": False}
+game_state = {"game_running": False, "pong_time_ms": 0, "instance_id": None}
 
 # Configurable through environment variables
-other_instance_url = os.getenv("OTHER_INSTANCE_URL", "http://localhost:8001")
+OTHER_INSTANCE_URL = f"http://localhost:{8002 if game_state['instance_id'] == 1 else 8001}/ping"
+
+@app.on_event("startup")
+def set_instance_id():
+    import sys
+    port = sys.argv[sys.argv.index("--port") + 1] if "--port" in sys.argv else "8001"
+    game_state["instance_id"] = int(port) - 8000  # Instance ID derived from port
 
 
 @app.post("/ping")
@@ -43,7 +49,7 @@ async def send_pong(wait_time_ms):
     try:
         await asyncio.sleep(wait_time_ms / 1000)
         response = requests.post(
-            other_instance_url + "/ping"
+            OTHER_INSTANCE_URL + "/ping"
         )  # Send ping to the other instance
         logger.info("Pong sent after %d ms, response: %s", wait_time_ms, response.text)
     except Exception as e:
@@ -62,7 +68,7 @@ async def start_game(pong_time: int):
     if game_state["is_first_instance"]:
         try:
             requests.post(
-                other_instance_url + "/ping"
+                OTHER_INSTANCE_URL + "/ping"
             )  # Initial ping to start the game
             logger.info(
                 "Game started with pong_time_ms: %d", game_state["pong_time_ms"]
@@ -106,5 +112,5 @@ async def stop_game():
 if __name__ == "__main__":
     import uvicorn
 
-    game_state["is_first_instance"] = other_instance_url == "http://pingpong2:8002"
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    game_state["is_first_instance"] = (OTHER_INSTANCE_URL == "http://pingpong2:8002")
+    uvicorn.run(app, host="0.0.0.0")
